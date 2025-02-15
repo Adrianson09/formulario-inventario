@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulario de Inventario</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-4xl mx-auto bg-white p-6 shadow-md rounded-lg">
+        <div class="text-center mb-4">
+            <h1 class="text-xl font-bold">Blue Sat - Servicios Administrados de Telecomunicaciones, S.A.</h1>
+            <h2 class="text-lg font-semibold">TIQUETE DE TRABAJO</h2>
+            <h3 class="text-blue-600 font-semibold">Inventario Físico</h3>
+            <p class="text-sm text-gray-600">Reporte de Equipos - Inventario - Entrada - Tránsito</p>
+        </div>
+        
+        <div class="mb-4 text-right">
+            <label class="font-semibold">Consecutivo:</label>
+            <span id="consecutivo" class="font-bold text-red-500">A-0001</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block font-semibold">Cliente:</label>
+                <input type="text" class="w-full border rounded p-2">
+            </div>
+            <div>
+                <label class="block font-semibold">Código Cliente:</label>
+                <input type="text" class="w-full border rounded p-2">
+            </div>
+            <div>
+                <label class="block font-semibold">Proyecto:</label>
+                <input type="text" class="w-full border rounded p-2">
+            </div>
+            <div>
+                <label class="block font-semibold">Fecha reporte:</label>
+                <input type="date" class="w-full border rounded p-2">
+            </div>
+            <div>
+                <label class="block font-semibold">Solicitante:</label>
+                <input type="text" class="w-full border rounded p-2">
+            </div>
+            <div>
+                <label class="block font-semibold">OC Cliente:</label>
+                <input type="text" class="w-full border rounded p-2">
+            </div>
+            <div>
+                <label class="block font-semibold">Dirección:</label>
+                <input type="text" class="w-full border rounded p-2">
+            </div>
+            <div>
+                <label class="block font-semibold">Ticket venta:</label>
+                <input type="text" class="w-full border rounded p-2">
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <label class="block font-semibold">Tipos de Trabajo:</label>
+            <div class="grid grid-cols-3 gap-4">
+                <label><input type="checkbox" class="mr-2">Venta</label>
+                <label><input type="checkbox" class="mr-2">Alquiler</label>
+                <label><input type="checkbox" class="mr-2">Consumo</label>
+                <label><input type="checkbox" class="mr-2">Entrega equipo</label>
+                <label><input type="checkbox" class="mr-2">Soporte técnico</label>
+                <label><input type="checkbox" class="mr-2">Visita previa</label>
+                <label><input type="checkbox" class="mr-2">Atención avería</label>
+                <label><input type="checkbox" class="mr-2">Entrada equipo</label>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <label class="block font-semibold">LABORES REALIZADAS:</label>
+            <textarea class="w-full border rounded p-2 h-20"></textarea>
+        </div>
+
+        <div class="mt-4">
+            <label class="block font-semibold">Observaciones:</label>
+            <textarea class="w-full border rounded p-2 h-16"></textarea>
+        </div>
+
+        <div class="mt-4">
+            <h3 class="text-lg font-semibold">Detalle de Equipos</h3>
+            <table class="w-full border mt-2">
+                <thead>
+                    <tr class="bg-gray-200">
+                        <th class="border p-2">Cantidad</th>
+                        <th class="border p-2">Código</th>
+                        <th class="border p-2">Descripción y Serie</th>
+                        <th class="border p-2">Marca</th>
+                        <th class="border p-2">Modelo</th>
+                    </tr>
+                </thead>
+                <tbody id="detalleEquipos">
+                    <tr>
+                        <td class="border p-2"><input type="number" class="w-full border rounded p-1"></td>
+                        <td class="border p-2"><input type="text" class="w-full border rounded p-1"></td>
+                        <td class="border p-2"><input type="text" class="w-full border rounded p-1"></td>
+                        <td class="border p-2"><input type="text" class="w-full border rounded p-1"></td>
+                        <td class="border p-2"><input type="text" class="w-full border rounded p-1"></td>
+                    </tr>
+                </tbody>
+            </table>
+            <button onclick="agregarFila()" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded">Agregar Línea</button>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-4">
+            <div class="border p-4 rounded">
+                <h3 class="font-semibold">Trabajo Realizado Por</h3>
+                <label>Nombre:</label>
+                <input type="text" class="w-full border rounded p-2">
+                <label>Fecha entrega:</label>
+                <input type="date" class="w-full border rounded p-2">
+                <label>Hora inicio:</label>
+                <input type="time" class="w-full border rounded p-2">
+                <label>Hora final:</label>
+                <input type="time" class="w-full border rounded p-2">
+                <label>Firma:</label>
+                <input type="text" class="w-full border rounded p-2">
+            </div>
+            <div class="border p-4 rounded">
+                <h3 class="font-semibold">Recibido Conforme</h3>
+                <label>Nombre:</label>
+                <input type="text" class="w-full border rounded p-2">
+                <label>Fecha:</label>
+                <input type="date" class="w-full border rounded p-2">
+                <label>Hora:</label>
+                <input type="time" class="w-full border rounded p-2">
+                <label>Firma:</label>
+                <input type="text" class="w-full border rounded p-2">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function agregarFila() {
+            let table = document.getElementById("detalleEquipos");
+            let newRow = table.insertRow();
+            for (let i = 0; i < 5; i++) {
+                let cell = newRow.insertCell(i);
+                cell.innerHTML = '<input type="text" class="w-full border rounded p-1">';
+            }
+        }
+    </script>
+</body>
+</html>

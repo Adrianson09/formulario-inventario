@@ -1,0 +1,33 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+build/
+.cache/
+.DS_Store
+# Logs
+logs
+*.log
+logs/**/*.log
+# Environments
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+# Database files
+*.sql
+*.sqlite
+*.db
+# IDE and Editor settings
+.vscode/
+.idea/
+*.swp
+# Nginx config (if any)
+nginx.conf
+# PM2 Process File
+pm2.log
+# MacOS and Linux files
+*.DS_Store
+Thumbs.db
