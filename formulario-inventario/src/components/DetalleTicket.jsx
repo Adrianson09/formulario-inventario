@@ -2,22 +2,13 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 
-
-const formatDate = (isoDate) => {
-    if (!isoDate) return "";
-    return new Date(isoDate).toISOString().split("T")[0]; // Extrae solo "YYYY-MM-DD"
-};
-
-const formatTime = (time) => {
-    if (!time) return "";
-    return time.substring(0, 5); // Extrae "HH:MM" de "HH:MM:SS"
-};
+const formatDate = (isoDate) => (isoDate ? new Date(isoDate).toISOString().split("T")[0] : "");
+const formatTime = (time) => (time ? time.substring(0, 5) : "");
 
 const DetalleTicket = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [ticket, setTicket] = useState(null);
-   
 
     useEffect(() => {
         axios.get(`http://localhost:3001/tickets/${id}`)
@@ -44,29 +35,28 @@ const DetalleTicket = () => {
             </div>
 
             {/* Datos Generales */}
-          
-<div className="grid grid-cols-2 gap-4">
-    {[
-        { label: "Cliente", name: "cliente" },
-        { label: "Código Cliente", name: "codigo_cliente" },
-        { label: "Proyecto", name: "proyecto" },
-        { label: "Fecha Reporte", name: "fecha_reporte", type: "date" }, // ✅ SOLO ESTE CAMBIO
-        { label: "Solicitante", name: "solicitante" },
-        { label: "OC Cliente", name: "oc_cliente" },
-        { label: "Dirección", name: "direccion" },
-        { label: "Ticket Venta", name: "ticket_venta" },
-    ].map(({ label, name, type }) => (
-        <div key={name}>
-            <label className="block font-semibold">{label}:</label>
-            <input
-                type={type || "text"}
-                value={name === "fecha_reporte" ? formatDate(ticket[name]) : (ticket[name] || "")} // 👈 Solo formatea la fecha
-                disabled
-                className="w-full border rounded p-2 bg-gray-100"
-            />
-        </div>
-    ))}
-</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {[
+                    { label: "Cliente", name: "cliente" },
+                    { label: "Código Cliente", name: "codigo_cliente" },
+                    { label: "Proyecto", name: "proyecto" },
+                    { label: "Fecha Reporte", name: "fecha_reporte", type: "date" },
+                    { label: "Solicitante", name: "solicitante" },
+                    { label: "OC Cliente", name: "oc_cliente" },
+                    { label: "Dirección", name: "direccion" },
+                    { label: "Ticket Venta", name: "ticket_venta" },
+                ].map(({ label, name, type }) => (
+                    <div key={name}>
+                        <label className="block font-semibold">{label}:</label>
+                        <input
+                            type={type || "text"}
+                            value={type === "date" ? formatDate(ticket[name]) : (ticket[name] || "")}
+                            disabled
+                            className="w-full border rounded p-2 bg-gray-100"
+                        />
+                    </div>
+                ))}
+            </div>
 
             {/* Labores y Observaciones */}
             <div className="mt-4">
@@ -90,18 +80,13 @@ const DetalleTicket = () => {
             {/* Tipos de Trabajo */}
             <div className="mt-4">
                 <label className="block font-semibold">Tipos de Trabajo:</label>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {[
-                        "venta", "alquiler", "consumo", "entrega_equipo", 
+                        "venta", "alquiler", "consumo", "entrega_equipo",
                         "soporte_tecnico", "visita_previa", "atencion_averia", "entrada_equipo"
                     ].map((key) => (
-                        <label key={key}>
-                            <input
-                                type="checkbox"
-                                checked={ticket[key]}
-                                disabled
-                                className="mr-2"
-                            />
+                        <label key={key} className="flex items-center">
+                            <input type="checkbox" checked={ticket[key]} disabled className="mr-2" />
                             {key.replace("_", " ").toUpperCase()}
                         </label>
                     ))}
@@ -109,11 +94,11 @@ const DetalleTicket = () => {
             </div>
 
             {/* Detalle de Equipos */}
-            <div className="mt-4">
+            <div className="mt-4 overflow-x-auto">
                 <h3 className="text-lg font-semibold">Detalle de Equipos</h3>
                 <table className="w-full border mt-2">
                     <thead>
-                        <tr className="bg-gray-200">
+                        <tr className="bg-gray-200 text-sm">
                             <th className="border p-2">Cantidad</th>
                             <th className="border p-2">Código</th>
                             <th className="border p-2">Descripción y Serie</th>
@@ -125,7 +110,7 @@ const DetalleTicket = () => {
                         {ticket.detalle_equipos.map((detalle, index) => (
                             <tr key={index}>
                                 {Object.values(detalle).slice(1).map((value, i) => (
-                                    <td key={i} className="border p-2">{value}</td>
+                                    <td key={i} className="border p-2 text-sm">{value}</td>
                                 ))}
                             </tr>
                         ))}
@@ -134,7 +119,7 @@ const DetalleTicket = () => {
             </div>
 
             {/* Información de Trabajo y Recibido */}
-            <div className="grid grid-cols-2 gap-4 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div className="border p-4 rounded">
                     <h3 className="font-semibold">Trabajo Realizado Por</h3>
                     {[
