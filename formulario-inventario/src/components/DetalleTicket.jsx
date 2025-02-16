@@ -9,12 +9,24 @@ const DetalleTicket = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const [ticket, setTicket] = useState(null);
+    // const token = localStorage.getItem("token"); // Obtiene el token almacenado
 
     useEffect(() => {
-        axios.get(`http://localhost:3001/tickets/${id}`)
-            .then(response => setTicket(response.data))
-            .catch(error => console.error("Error cargando el ticket", error));
-    }, [id]);
+        const token = localStorage.getItem("token"); // Obtener el token de localStorage
+    
+        axios.get(`http://localhost:3001/tickets/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}` // Enviar el token en la petición
+            }
+        })
+        .then(response => setTicket(response.data))
+        .catch(error => {
+            console.error("Error cargando el ticket", error);
+            if (error.response && error.response.status === 401) {
+                navigate("/"); // Redirigir al login si no está autenticado
+            }
+        });
+    }, [id, navigate]);
 
     if (!ticket) return <p className="text-center">Cargando...</p>;
 
@@ -171,7 +183,7 @@ const DetalleTicket = () => {
             </div>
 
             {/* Botón de Volver */}
-            <button onClick={() => navigate("/")} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+            <button onClick={() => navigate("/dashboard")} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
                 Volver
             </button>
         </div>

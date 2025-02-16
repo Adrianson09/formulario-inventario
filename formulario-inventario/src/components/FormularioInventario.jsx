@@ -96,9 +96,19 @@ const guardarFirma = async () => {
 };
 
 
+
 const handleSubmit = async (e) => { 
     e.preventDefault();
     setIsSubmitting(true);
+
+    // Obtener el token del localStorage
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        alert("No hay token, por favor inicia sesión.");
+        setIsSubmitting(false);
+        return;
+    }
 
     // Esperar a que la firma se guarde antes de enviar el formulario
     const firmaBase64 = await guardarFirma(); 
@@ -119,25 +129,30 @@ const handleSubmit = async (e) => {
     }, {});
 
     try {
-        await axios.post("http://localhost:3001/tickets", { 
-            ...formData, 
-            firma_recibido: firmaBase64, // ✅ Firma guardada correctamente
-            consecutivo,
-            ...tiposTrabajoPlano, // ✅ Enviar tipos de trabajo convertidos a 1/0
-            detalle_equipos: detalleEquiposValidos // ✅ Enviar solo equipos con datos
-        });
+        await axios.post(
+            "http://localhost:3001/tickets", 
+            { 
+                ...formData, 
+                firma_recibido: firmaBase64, // ✅ Firma guardada correctamente
+                consecutivo,
+                ...tiposTrabajoPlano, // ✅ Enviar tipos de trabajo convertidos a 1/0
+                detalle_equipos: detalleEquiposValidos // ✅ Enviar solo equipos con datos
+            },
+            {
+                headers: { Authorization: `Bearer ${token}` }, // ✅ Agregar token de autenticación
+            }
+        );
 
         // Agregar un pequeño delay antes de redirigir
         setTimeout(() => {
-            navigate("/"); // Redirigir a la lista de tickets
-        }, 500); // 500ms para animación
+            navigate("/dashboard"); // Redirigir a la lista de tickets
+        }, 500);
     } catch (error) {
         console.error("Error registrando el ticket", error);
-        alert("Error al registrar el ticket");
+        alert("Error al registrar el ticket: " + error.response?.data?.message);
         setIsSubmitting(false); // Revertir animación en caso de error
     }
 };
-
 
    
    

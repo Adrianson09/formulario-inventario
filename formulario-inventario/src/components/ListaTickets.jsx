@@ -86,7 +86,7 @@ const ListaTickets = () => {
                         {filteredTickets.map(ticket => (
                             <tr key={ticket.id} className="hover:bg-gray-100 cursor-pointer">
                                 <td className="border p-2 text-blue-500 underline" 
-                                    onClick={() => navigate(`/ticket/${ticket.id}`)}>
+                                    onClick={() => navigate(`/dashboard/ticket/${ticket.id}`)}>
                                     {ticket.consecutivo}
                                 </td>
                                 <td className="border p-2">{ticket.cliente}</td>
