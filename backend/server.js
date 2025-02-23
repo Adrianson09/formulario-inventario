@@ -9,6 +9,7 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 
 
+
 const sgMail = require("@sendgrid/mail");
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -16,20 +17,30 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-const db = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME
+
+
+const db = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,  // Espera conexiones activas
+  connectionLimit: 10,       // Número máximo de conexiones simultáneas
+  queueLimit: 0              // Sin límite de cola de conexiones
 });
 
-db.connect(err => {
-    if (err) {
-        console.error("Error conectando a MySQL:", err);
-        return;
-    }
-    console.log("Conectado a la base de datos");
+
+// Verificar la conexión inicial
+db.getConnection((err, connection) => {
+  if (err) {
+      console.error("Error conectando a MySQL:", err);
+      return;
+  }
+  console.log("Conectado a la base de datos");
+  connection.release(); // Liberar la conexión para el pool
 });
+
+
 
 app.use("/firmas", express.static(path.join(__dirname, "firmas")));
 
@@ -81,6 +92,7 @@ app.get("/tickets", (req, res) => {
                     hora_final: row.hora_final,
                     firma_trabajo: row.firma_trabajo,
                     recibido_por: row.recibido_por,
+                    correo_cliente: row.correo_cliente,
                     fecha_recibido: row.fecha_recibido,
                     hora_recibido: row.hora_recibido,
                     firma_recibido: row.firma_recibido,
@@ -155,6 +167,7 @@ app.get("/tickets/:id", (req, res) => {
             hora_final: results[0].hora_final,
             firma_trabajo: results[0].firma_trabajo,
             recibido_por: results[0].recibido_por,
+            correo_cliente: results[0].correo_cliente,
             fecha_recibido: results[0].fecha_recibido,
             hora_recibido: results[0].hora_recibido,
             firma_recibido: results[0].firma_recibido,
@@ -191,12 +204,14 @@ app.get("/tickets/:id", (req, res) => {
 // Registrar un nuevo ticket con detalle de equipos
 
 
+  
+
 app.post("/tickets", protect, (req, res) => {
     const {
         cliente, codigo_cliente, proyecto, fecha_reporte, solicitante,
         oc_cliente, direccion, ticket_venta, labores_realizadas, observaciones,
         fecha_entrega, hora_inicio, hora_final, firma_trabajo,
-        recibido_por, fecha_recibido, hora_recibido, firma_recibido, detalle_equipos,
+        recibido_por, correo_cliente, fecha_recibido, hora_recibido, firma_recibido, detalle_equipos,
         venta, alquiler, consumo, entrega_equipo, soporte_tecnico, visita_previa, atencion_averia, entrada_equipo
     } = req.body;
 
@@ -228,157 +243,79 @@ app.post("/tickets", protect, (req, res) => {
             INSERT INTO tickets (consecutivo, user_id, cliente, codigo_cliente, proyecto, fecha_reporte,
                 solicitante, oc_cliente, direccion, ticket_venta, labores_realizadas, observaciones,
                 trabajo_realizado_por, fecha_entrega, hora_inicio, hora_final, firma_trabajo,
-                recibido_por, fecha_recibido, hora_recibido, firma_recibido,
+                recibido_por, fecha_recibido, correo_cliente, hora_recibido, firma_recibido,
                 venta, alquiler, consumo, entrega_equipo, soporte_tecnico, visita_previa, atencion_averia, entrada_equipo)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
+    
         const values = [
-            consecutivo, userId, cliente, codigo_cliente, proyecto, fecha_reporte, solicitante,
-            oc_cliente, direccion, ticket_venta, labores_realizadas, observaciones,
-            userEmail, fecha_entrega, hora_inicio, hora_final, firmaTrabajoPath,
-            recibido_por, fecha_recibido, hora_recibido, firmaRecibidoPath,
-            venta ? 1 : 0, alquiler ? 1 : 0, consumo ? 1 : 0, entrega_equipo ? 1 : 0,
-            soporte_tecnico ? 1 : 0, visita_previa ? 1 : 0, atencion_averia ? 1 : 0, entrada_equipo ? 1 : 0
+          consecutivo, userId, cliente, codigo_cliente, proyecto, fecha_reporte, solicitante,
+          oc_cliente, direccion, ticket_venta, labores_realizadas, observaciones,
+          userEmail, fecha_entrega, hora_inicio, hora_final, firmaTrabajoPath,
+          recibido_por, fecha_recibido, correo_cliente, hora_recibido, firmaRecibidoPath,
+          venta ? 1 : 0, alquiler ? 1 : 0, consumo ? 1 : 0, entrega_equipo ? 1 : 0,
+          soporte_tecnico ? 1 : 0, visita_previa ? 1 : 0, atencion_averia ? 1 : 0, entrada_equipo ? 1 : 0
         ];
 
-        db.query(sql, values, (err, result) => {
+
+ db.query(sql, values, (err, result) => {
+      if (err) return res.status(500).json({ error: err });
+      const ticketId = result.insertId;
+      // Generamos la URL del ticket usando el endpoint GET /tickets/:id
+      const ticketUrl = `http://localhost:5173/dashboard/ticket/${ticketId}`;
+
+      // Si se enviaron detalles de equipos, se insertan en la tabla detalle_equipos
+      if (detalle_equipos && detalle_equipos.length > 0) {
+        const detalleValues = detalle_equipos.map(d => [
+          ticketId, d.cantidad, d.codigo, d.descripcion_serie, d.marca, d.modelo
+        ]);
+        db.query(
+          `INSERT INTO detalle_equipos (ticket_id, cantidad, codigo, descripcion_serie, marca, modelo)
+          VALUES ?`,
+          [detalleValues],
+          (err) => {
             if (err) return res.status(500).json({ error: err });
-
-            const ticketId = result.insertId;
-
-            if (detalle_equipos && detalle_equipos.length > 0) {
-                const detalleValues = detalle_equipos.map(d => [
-                    ticketId, d.cantidad, d.codigo, d.descripcion_serie, d.marca, d.modelo
-                ]);
-
-                db.query(
-                    `INSERT INTO detalle_equipos (ticket_id, cantidad, codigo, descripcion_serie, marca, modelo)
-                    VALUES ?`,
-                    [detalleValues],
-                    (err) => {
-                        if (err) return res.status(500).json({ error: err });
-
-                        // Enviar correo después de insertar el ticket
-                        enviarCorreoNotificacion(userEmail, consecutivo, cliente, solicitante);
-                        
-                        res.json({ message: "Ticket registrado con éxito", consecutivo });
-                    }
-                );
-            } else {
-                // Enviar correo después de insertar el ticket
-                enviarCorreoNotificacion(userEmail, consecutivo, cliente, solicitante);
-
-                res.json({ message: "Ticket registrado sin detalles de equipos", consecutivo });
-            }
-        });
+            // Enviar correo con la URL del ticket y responder
+            enviarCorreoNotificacion(userEmail, consecutivo, cliente, solicitante, ticketUrl);
+            res.json({ message: "Ticket registrado con éxito", consecutivo, ticketUrl });
+          }
+        );
+      } else {
+        // Enviar correo si no hay detalles de equipos y responder
+        enviarCorreoNotificacion(userEmail, consecutivo, cliente, solicitante, ticketUrl);
+        res.json({ message: "Ticket registrado sin detalles de equipos", consecutivo, ticketUrl });
+      }
     });
+  });
 });
 
-// Función para enviar el correo de notificación
-function enviarCorreoNotificacion(toEmail, consecutivo, cliente, solicitante) {
-  const msg = {
-    to: toEmail, 
-    from: "gzadrian13@gmail.com",
-    subject: `Tu nuevo ticket ha sido creado: ${consecutivo}`,
-    html: `
-      <h2>¡Ticket registrado con éxito!</h2>
-      <p><strong>Consecutivo:</strong> ${consecutivo}</p>
-      <p><strong>Cliente:</strong> ${cliente}</p>
-      <p><strong>Solicitante:</strong> ${solicitante}</p>
-      <p>Gracias por usar el sistema de tickets. Puedes revisar los detalles en la aplicación.</p>
-    `,
-  };
 
-  sgMail
-    .send(msg)
-    .then(() => {
-      console.log(`Correo de notificación enviado a ${toEmail}`);
-    })
-    .catch((error) => {
-      console.error("Error al enviar notificación:", error);
-    });
+
+function enviarCorreoNotificacion(toEmail, consecutivo, cliente, solicitante, ticketUrl) {
+const msg = {
+to: toEmail,
+from: "gzadrian13@gmail.com",
+subject: `Tu nuevo ticket ha sido creado: ${consecutivo}`,
+html: `<h2>¡Ticket registrado con éxito!</h2>
+       <p><strong>Consecutivo:</strong> ${consecutivo}</p>
+       <p><strong>Cliente:</strong> ${cliente}</p>
+       <p><strong>Solicitante:</strong> ${solicitante}</p>
+       <p>Puedes ver tu ticket en el siguiente enlace: 
+          <a href="${ticketUrl}">${ticketUrl}</a>
+       </p>`
+};
+
+sgMail.send(msg)
+.then(() => {
+console.log(`Correo de notificación enviado a ${toEmail}`);
+})
+.catch(error => {
+console.error("Error al enviar notificación:", error);
+});
 }
 
-// app.post("/tickets",protect, (req, res) => {
-//     const {
-//         cliente, codigo_cliente, proyecto, fecha_reporte, solicitante,
-//         oc_cliente, direccion, ticket_venta, labores_realizadas, observaciones,
-//         trabajo_realizado_por, fecha_entrega, hora_inicio, hora_final, firma_trabajo,
-//         recibido_por, fecha_recibido, hora_recibido, firma_recibido, detalle_equipos,
-//         venta, alquiler, consumo, entrega_equipo, soporte_tecnico, visita_previa, atencion_averia, entrada_equipo
-//     } = req.body;
 
-//     db.query("SELECT MAX(id) + 1 AS nextId FROM tickets", (err, result) => {
-//         if (err) return res.status(500).json({ error: err });
-//         const nextId = result[0].nextId || 1;
-//         const consecutivo = `A-${nextId.toString().padStart(4, '0')}`;
-
-//         // Directorio donde se guardarán las firmas
-//         const firmaPath = path.join(__dirname, "firmas");
-//         if (!fs.existsSync(firmaPath)) fs.mkdirSync(firmaPath);
-
-//         // Guardar firma de trabajo
-//         let firmaTrabajoPath = "";
-//         if (firma_trabajo && firma_trabajo.startsWith("data:image")) {
-//             firmaTrabajoPath = `firmas/firma_trabajo_${nextId}.png`;
-//             const base64Data = firma_trabajo.replace(/^data:image\/png;base64,/, "");
-//             fs.writeFileSync(firmaTrabajoPath, base64Data, "base64");
-//         }
-
-//         // Guardar firma de recibido
-//         let firmaRecibidoPath = "";
-//         if (firma_recibido && firma_recibido.startsWith("data:image")) {
-//             firmaRecibidoPath = `firmas/firma_recibido_${nextId}.png`;
-//             const base64Data = firma_recibido.replace(/^data:image\/png;base64,/, "");
-//             fs.writeFileSync(firmaRecibidoPath, base64Data, "base64");
-//         }
-
-//         const sql = `
-//             INSERT INTO tickets (consecutivo, user_id, cliente, codigo_cliente, proyecto, fecha_reporte,
-//                 solicitante, oc_cliente, direccion, ticket_venta, labores_realizadas, observaciones,
-//                 trabajo_realizado_por, fecha_entrega, hora_inicio, hora_final, firma_trabajo,
-//                 recibido_por, fecha_recibido, hora_recibido, firma_recibido,
-//                 venta, alquiler, consumo, entrega_equipo, soporte_tecnico, visita_previa, atencion_averia, entrada_equipo)
-//             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-//         `;
-
-//         const values = [
-//             consecutivo, req.user.id, cliente, codigo_cliente, proyecto, fecha_reporte, solicitante,
-//             oc_cliente, direccion, ticket_venta, labores_realizadas, observaciones,
-//             trabajo_realizado_por, fecha_entrega, hora_inicio, hora_final, firmaTrabajoPath,
-//             recibido_por, fecha_recibido, hora_recibido, firmaRecibidoPath,
-//             venta ? 1 : 0, alquiler ? 1 : 0, consumo ? 1 : 0, entrega_equipo ? 1 : 0,
-//             soporte_tecnico ? 1 : 0, visita_previa ? 1 : 0, atencion_averia ? 1 : 0, entrada_equipo ? 1 : 0
-//         ];
-
-//         db.query(sql, values, (err, result) => {
-//             if (err) return res.status(500).json({ error: err });
-
-//             const ticketId = result.insertId;
-
-//             if (detalle_equipos && detalle_equipos.length > 0) {
-//                 const detalleValues = detalle_equipos.map(d => [
-//                     ticketId, d.cantidad, d.codigo, d.descripcion_serie, d.marca, d.modelo
-//                 ]);
-
-//                 db.query(
-//                     `INSERT INTO detalle_equipos (ticket_id, cantidad, codigo, descripcion_serie, marca, modelo)
-//                     VALUES ?`,
-//                     [detalleValues],
-//                     (err) => {
-//                         if (err) return res.status(500).json({ error: err });
-//                         res.json({ message: "Ticket registrado con éxito", consecutivo });
-//                     }
-//                 );
-//             } else {
-//                 res.json({ message: "Ticket registrado sin detalles de equipos", consecutivo });
-//             }
-//         });
-//     });
-// });
-
-// Registrar un usuario
 // Registrar un usuario con verificación
 app.post("/register", async (req, res) => {
     try {
@@ -410,7 +347,7 @@ app.post("/register", async (req, res) => {
         }
   
         // Enviar correo de verificación
-        const verificationLink = `http://localhost:3001/verify-email/${verificationToken}`;
+        const verificationLink = `http://localhost:5173/verify-email/${verificationToken}`;
         const msg = {
           to: email,
           from: "gzadrian13@gmail.com", // ¡Asegúrate de que coincida con tu Single Sender!

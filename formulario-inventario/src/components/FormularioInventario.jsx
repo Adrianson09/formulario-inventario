@@ -27,6 +27,7 @@ const FormularioInventario = () => {
         hora_final: "",
         firma_trabajo: "",
         recibido_por: "",
+        correo_cliente: "",
         fecha_recibido: "",
         hora_recibido: "",
         firma_recibido: "",
@@ -154,8 +155,15 @@ const handleSubmit = async (e) => {
     }
 };
 
+const handleDeleteFila = (index) => {
+    // Remueve la fila en el índice indicado
+    const newDetalleEquipos = formData.detalleEquipos.filter((_, i) => i !== index);
+    setFormData({ ...formData, detalleEquipos: newDetalleEquipos });
+  };
    
-   
+  
+  const todayCostaRica = new Date().toLocaleDateString("en-CA", { timeZone: "America/Costa_Rica" });
+
 
     return (
 <form onSubmit={handleSubmit} className="max-w-4xl mx-auto bg-white p-6 shadow-md rounded-lg">
@@ -240,50 +248,62 @@ const handleSubmit = async (e) => {
     </div>
 
     {/* Tabla Detalle de Equipos */}
+
+
     <div className="mt-4">
-        <h3 className="text-lg font-semibold">Detalle de Equipos</h3>
-        <div className="overflow-x-auto">
-            <table className="w-full border mt-2 text-sm">
-                <thead>
-                    <tr className="bg-gray-200">
-                        <th className="border p-2">Cantidad</th>
-                        <th className="border p-2">Código</th>
-                        <th className="border p-2">Descripción y Serie</th>
-                        <th className="border p-2">Marca</th>
-                        <th className="border p-2">Modelo</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {formData.detalleEquipos.map((detalle, index) => (
-                        <tr key={index}>
-                            {Object.keys(detalle).map((field) => (
-                                <td key={field} className="border p-2">
-                                    <input
-                                        type="text"
-                                        name={field}
-                                        value={detalle[field]}
-                                        onChange={(e) => {
-                                            const newDetalleEquipos = [...formData.detalleEquipos];
-                                            newDetalleEquipos[index][field] = e.target.value;
-                                            setFormData({ ...formData, detalleEquipos: newDetalleEquipos });
-                                        }}
-                                        className="w-full border rounded p-1"
-                                    />
-                                </td>
-                            ))}
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-        <button
-            type="button"
-            onClick={agregarFila}
-            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
-        >
-            Agregar Línea
-        </button>
+    <h3 className="text-lg font-semibold">Detalle de Equipos</h3>
+    <div className="overflow-x-auto">
+      <table className="w-full border mt-2 text-sm">
+        <thead>
+          <tr className="bg-gray-200">
+            <th className="border p-2">Cantidad</th>
+            <th className="border p-2">Código</th>
+            <th className="border p-2">Descripción y Serie</th>
+            <th className="border p-2">Marca</th>
+            <th className="border p-2">Modelo</th>
+            <th className="border p-2 ">Del</th>
+          </tr>
+        </thead>
+        <tbody>
+          {formData.detalleEquipos.map((detalle, index) => (
+            <tr key={index}>
+              {Object.keys(detalle).map((field) => (
+                <td key={field} className="border p-2">
+                  <input
+                    type="text"
+                    name={field}
+                    value={detalle[field]}
+                    onChange={(e) => {
+                      const newDetalleEquipos = [...formData.detalleEquipos];
+                      newDetalleEquipos[index][field] = e.target.value;
+                      setFormData({ ...formData, detalleEquipos: newDetalleEquipos });
+                    }}
+                    className="w-full border rounded p-1"
+                  />
+                </td>
+              ))}
+              <td className="border p-2">
+                <button
+                  type="button"
+                  onClick={() => handleDeleteFila(index)}
+                  className="px-2 py-1 bg-red-500  text-white rounded"
+                >
+                  X
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
+    <button
+      type="button"
+      onClick={agregarFila}
+      className="mt-2 px-4 py-2 bg-blue-500 text-white rounded"
+    >
+      Agregar Línea
+    </button>
+  </div>
 
     {/* Información de Trabajo y Recibido */}
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -301,7 +321,8 @@ const handleSubmit = async (e) => {
                         name={name}
                         value={formData[name]}
                         onChange={handleChange}
-                        min={type === "date" ? new Date().toISOString().split("T")[0] : ""}
+                        min={type === "date" ? todayCostaRica : ""}
+                        max={type === "date" ? todayCostaRica : ""}
                         className="w-full border rounded p-2"
                         required
                     />
@@ -314,6 +335,7 @@ const handleSubmit = async (e) => {
 
     {[
         { label: "Nombre", name: "recibido_por", type: "text" },
+        { label: "Correo Del Cliente", name: "correo_cliente", type: "email" },
         { label: "Fecha", name: "fecha_recibido", type: "date" },
         { label: "Hora", name: "hora_recibido", type: "time" }
     ].map(({ label, name, type }) => (
@@ -323,8 +345,9 @@ const handleSubmit = async (e) => {
                 type={type}
                 name={name}
                 value={formData[name]}
-                onChange={handleChange}
-                min={type === "date" ? new Date().toISOString().split("T")[0] : ""}
+                onChange={handleChange}                
+                min={type === "date" ? todayCostaRica : ""}
+                max={type === "date" ? todayCostaRica : ""}
                 className="w-full border rounded p-2"
                 required
             />
