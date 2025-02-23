@@ -16,13 +16,17 @@ const VerifyEmailPage = () => {
         setLoading(false);
         // Redirige al login después de 3 segundos
         setTimeout(() => {
-          navigate("/login");
+          navigate("/");
         }, 3000);
       })
       .catch((error) => {
         console.error("Error al verificar el correo:", error);
         setMessage("Error al verificar el correo.");
         setLoading(false);
+        // Redirige al login después de 3 segundos
+        setTimeout(() => {
+          navigate("/");
+        }, 3000);
       });
   }, [token, navigate]);
 

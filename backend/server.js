@@ -374,25 +374,30 @@ app.post("/register", async (req, res) => {
     }
   });
   
-// Verificar correo electrónico
+  // Verificar el token de verificación
+  
   app.get("/verify-email/:token", (req, res) => {
     const { token } = req.params;
     const sqlSelect = "SELECT * FROM users WHERE token_verificacion = ?";
     db.query(sqlSelect, [token], (err, results) => {
-      if (err) return res.status(500).json({ error: err });
+      if (err) return res.json({ message: "Error interno" });
       if (results.length === 0) {
-        return res.status(400).json({ message: "Token inválido o ya usado" });
+        return res.json({ message: "Revisando Token" });
       }
   
       const user = results[0];
+      if (user.verificado) {
+        return res.json({ message: "La cuenta ya está verificada" });
+      }
+  
       const sqlUpdate = `
         UPDATE users
         SET verificado = true, token_verificacion = NULL
         WHERE id = ?
       `;
       db.query(sqlUpdate, [user.id], (err2) => {
-        if (err2) return res.status(500).json({ error: err2 });
-        return res.redirect("http://localhost:5173/");
+        if (err2) return res.json({ message: "Error interno al actualizar usuario" });
+        return res.json({ message: "Cuenta verificada correctamente." });
       });
     });
   });
@@ -430,6 +435,10 @@ app.post("/login", async (req, res) => {
           return res.status(400).json({ message: "Credenciales inválidas (contraseña incorrecta)." });
         }
   
+           // Verificar que el usuario esté autenticado (autenticado === 1)
+      if (user.verificado !== 1) {
+        return res.status(400).json({ message: "Usuario no autenticado. Por favor, verifica tu cuenta." });
+      }
         // Generar token JWT
         // Asegúrese de tener una variable JWT_SECRET en su archivo .env
         const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
