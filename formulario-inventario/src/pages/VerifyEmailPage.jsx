@@ -9,7 +9,7 @@ const VerifyEmailPage = () => {
 
   useEffect(() => {
     // Llama al endpoint de verificación en el backend
-    fetch(`http://localhost:3001/verify-email/${token}`)
+    fetch(`http://31.220.104.197:3001/verify-email/${token}`)
       .then((response) => response.json())
       .then((data) => {
         setMessage(data.message || "Cuenta verificada correctamente.");

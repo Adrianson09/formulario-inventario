@@ -18,7 +18,7 @@ const DetalleTicket = () => {
     useEffect(() => {
         const token = localStorage.getItem("token"); // Obtener el token de localStorage
     
-        axios.get(`http://localhost:3001/tickets/${id}`, {
+        axios.get(`http://31.220.104.197:3001/tickets/${id}`, {
             headers: {
                 Authorization: `Bearer ${token}` // Enviar el token en la petición
             }
@@ -226,7 +226,7 @@ const DetalleTicket = () => {
                     <div className="mt-4">
                         <h3 className="font-semibold my-2">Firma Recibido:</h3>
                         {ticket.firma_recibido ? (
-                            <img src={`http://localhost:3001/${ticket.firma_recibido}`} alt="Firma" className="border w-full h-32 bg-[#f3f4f6] rounded" />
+                            <img src={`http://31.220.104.197:3001/${ticket.firma_recibido}`} alt="Firma" className="border w-full h-32 bg-[#f3f4f6] rounded" />
                         ) : (
                             <p className="text-[#6a7282]">No disponible</p>
                         )}

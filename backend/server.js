@@ -263,7 +263,7 @@ app.post("/tickets", protect, (req, res) => {
       if (err) return res.status(500).json({ error: err });
       const ticketId = result.insertId;
       // Generamos la URL del ticket usando el endpoint GET /tickets/:id
-      const ticketUrl = `http://localhost:5173/dashboard/ticket/${ticketId}`;
+      const ticketUrl = `http://31.220.104.197/dashboard/ticket/${ticketId}`;
 
       // Si se enviaron detalles de equipos, se insertan en la tabla detalle_equipos
       if (detalle_equipos && detalle_equipos.length > 0) {
@@ -337,9 +337,9 @@ app.post("/register", async (req, res) => {
   
       // Insertar en la tabla 'users' con token_verificacion y verificado=false
       const sql = `
-        INSERT INTO users (nombre, email, password, token_verificacion, verificado)
-        VALUES (?, ?, ?, ?, false)
-      `;
+      INSERT INTO users (nombre, email, password, token_verificacion, verificado)
+      VALUES (?, ?, ?, ?, false)
+    `;
       db.query(sql, [nombre, email, hashedPassword, verificationToken], (err) => {
         if (err) {
           console.error("Error insertando usuario:", err);
@@ -347,7 +347,7 @@ app.post("/register", async (req, res) => {
         }
   
         // Enviar correo de verificación
-        const verificationLink = `http://localhost:5173/verify-email/${verificationToken}`;
+        const verificationLink = `http://31.220.104.197/verify-email/${verificationToken}`;
         const msg = {
           to: email,
           from: "gzadrian13@gmail.com", // ¡Asegúrate de que coincida con tu Single Sender!
@@ -533,7 +533,7 @@ app.post("/forgot-password", (req, res) => {
             }
 
             // Enviar correo con el enlace de restablecimiento
-            const resetLink = `http://localhost:5173/reset-password/${token}`;
+            const resetLink = `http://31.220.104.197/reset-password/${token}`;
             const msg = {
                 to: email,
                 from: "gzadrian13@gmail.com",

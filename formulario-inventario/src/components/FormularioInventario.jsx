@@ -43,9 +43,9 @@ const FormularioInventario = () => {
             entrada_equipo: false
         }
     });
-// http://localhost/
+// http://31.220.104.197/
     useEffect(() => {
-        axios.get("http://localhost:3001/consecutivo")
+        axios.get("http://31.220.104.197:3001/consecutivo")
             .then(response => setConsecutivo(response.data.consecutivo))
             .catch(error => console.error("Error obteniendo el consecutivo", error));
     }, []);
@@ -131,7 +131,7 @@ const handleSubmit = async (e) => {
 
     try {
         await axios.post(
-            "http://localhost:3001/tickets", 
+            "http://31.220.104.197:3001/tickets", 
             { 
                 ...formData, 
                 firma_recibido: firmaBase64, // ✅ Firma guardada correctamente
