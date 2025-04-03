@@ -296,7 +296,7 @@ app.post("/tickets", protect, (req, res) => {
 function enviarCorreoNotificacion(toEmail, consecutivo, cliente, solicitante, ticketUrl) {
 const msg = {
 to: toEmail,
-from: "gzadrian13@gmail.com",
+from: "soporte@revify.tech",
 subject: `Tu nuevo ticket ha sido creado: ${consecutivo}`,
 html: `<h2>¡Ticket registrado con éxito!</h2>
        <p><strong>Consecutivo:</strong> ${consecutivo}</p>
@@ -351,7 +351,7 @@ app.post("/register", async (req, res) => {
         const verificationLink = `https://revify.tech/verify-email/${verificationToken}`;
         const msg = {
           to: email,
-          from: "gzadrian13@gmail.com", // ¡Asegúrate de que coincida con tu Single Sender!
+          from: "soporte@revify.tech", // ¡Asegúrate de que coincida con tu Single Sender!
           subject: "Verifica tu cuenta",
           html: `<p>Hola ${nombre}, gracias por registrarte. 
                  Haz clic <a href="${verificationLink}">aquí</a> para verificar tu cuenta.</p>
@@ -468,7 +468,7 @@ app.post("/login", async (req, res) => {
   
       const msg = {
         to: toEmail,
-        from: "gzadrian13@gmail.com",
+        from: "soporte@revify.tech",
         subject: "Correo de prueba",
         text: "Hola, este es un correo de prueba con SendGrid",
         html: "<strong>Hola, este es un correo de prueba con SendGrid</strong>",
@@ -537,7 +537,7 @@ app.post("/forgot-password", (req, res) => {
             const resetLink = `https://revify.tech/reset-password/${token}`;
             const msg = {
                 to: email,
-                from: "gzadrian13@gmail.com",
+                from: "soporte@revify.tech",
                 subject: "Recuperación de contraseña",
                 text: `Haga clic en el siguiente enlace para restablecer su contraseña: ${resetLink}`,
                 html: `<p>Haga clic en el siguiente enlace para restablecer su contraseña:</p><p><a href="${resetLink}">${resetLink}</a></p>`
