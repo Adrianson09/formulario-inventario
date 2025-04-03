@@ -14,7 +14,7 @@ const ListaTickets = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        axios.get("http://31.220.104.197:3001/tickets")
+        axios.get("https://revify.tech/api/tickets")
             .then(response => {
                 setTickets(response.data);
                 setFilteredTickets(response.data);

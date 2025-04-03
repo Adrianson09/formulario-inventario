@@ -20,7 +20,7 @@ const RegisterPage = () => {
     }
 
     try {
-      const response = await fetch("http://31.220.104.197:3001/register", {
+      const response = await fetch("https://revify.tech/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre, email, password }),

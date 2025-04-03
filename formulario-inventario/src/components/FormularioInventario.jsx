@@ -9,6 +9,7 @@ const FormularioInventario = () => {
     const [isSubmitting, setIsSubmitting] = useState(false); // Estado para animación
     const [firmaRecibido, setFirmaRecibido] = useState(null);
     const [consecutivo, setConsecutivo] = useState("A-0001");
+    const [errorTiposTrabajo, setErrorTiposTrabajo] = useState(false);
     const sigCanvas = useRef(null);
     const [formData, setFormData] = useState({
         cliente: "",
@@ -43,9 +44,9 @@ const FormularioInventario = () => {
             entrada_equipo: false
         }
     });
-// http://31.220.104.197/
+// https://revify.tech/
     useEffect(() => {
-        axios.get("http://31.220.104.197:3001/consecutivo")
+        axios.get("https://revify.tech/api/consecutivo")
             .then(response => setConsecutivo(response.data.consecutivo))
             .catch(error => console.error("Error obteniendo el consecutivo", error));
     }, []);
@@ -128,10 +129,20 @@ const handleSubmit = async (e) => {
         acc[key] = formData.tiposTrabajo[key] ? 1 : 0;
         return acc;
     }, {});
+    
+     // Validar que al menos un checkbox esté marcado
+     const algunSeleccionado = Object.values(formData.tiposTrabajo).some(value => value);
+    
+     if (!algunSeleccionado) {
+         setErrorTiposTrabajo(true);
+         return; // No enviar el formulario si la validación falla
+     } else {
+         setErrorTiposTrabajo(false);
+     }
 
     try {
         await axios.post(
-            "http://31.220.104.197:3001/tickets", 
+            "https://revify.tech/api/tickets", 
             { 
                 ...formData, 
                 firma_recibido: firmaBase64, // ✅ Firma guardada correctamente
@@ -181,35 +192,69 @@ const handleDeleteFila = (index) => {
         <span className="font-bold text-red-500">{consecutivo}</span>
     </div>
 
-    {/* Datos Generales */}
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {[
-            { label: "Cliente", name: "cliente", type: "text" },
-            { label: "Código Cliente", name: "codigo_cliente", type: "text" },
-            { label: "Proyecto", name: "proyecto", type: "text" },
-            { label: "Fecha Reporte", name: "fecha_reporte", type: "date" },
-            { label: "Solicitante", name: "solicitante", type: "text" },
-            { label: "OC Cliente", name: "oc_cliente", type: "text" },
-            { label: "Dirección", name: "direccion", type: "text" },
-            { label: "Ticket Venta", name: "ticket_venta", type: "text" },
-        ].map(({ label, name, type }) => (
-            <div key={name}>
-                <label className="block font-semibold">{label}:</label>
-                <input
-                    type={type}
-                    name={name}
-                    value={formData[name]}
-                    onChange={handleChange}
-                    className="w-full border rounded p-2"
-                    required
-                />
-            </div>
-        ))}
+  {/* Datos Generales */}
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+  {[
+    { label: "Cliente", name: "cliente", type: "text" },
+    { label: "Código Cliente", name: "codigo_cliente", type: "text" },
+    { label: "Proyecto", name: "proyecto", type: "text" },
+    { label: "Fecha Reporte", name: "fecha_reporte", type: "date" },
+    { label: "Solicitante", name: "solicitante", type: "text" },
+    { label: "OC Cliente", name: "oc_cliente", type: "text" },
+    { label: "Dirección", name: "direccion", type: "text" },
+    { label: "Ticket Venta", name: "ticket_venta", type: "text" },
+  ].map(({ label, name, type }) => (
+    <div key={name}>
+      <label className="block font-semibold">{label}:</label>
+      {name === "proyecto" ? (
+        <select
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          required
+        >
+          <option value="">Seleccione un proyecto</option>
+          <option value="Avenida Escazu">Avenida Escazu</option>
+          <option value="Avenida Medica">Avenida Medica</option>
+          <option value="AE Torre 402">AE Torre 402</option>
+          <option value="ALESTE">ALESTE</option>
+          <option value="San Antonio Business Park">San Antonio Business Park</option>
+          <option value="Bahía San Felipe">Bahía San Felipe</option>
+          <option value="Real Cariari">Real Cariari</option>
+          <option value="DAS AE RENLAN">DAS AE RENLAN</option>
+          <option value="El Cedral">El Cedral</option>
+          <option value="ECOMUR">ECOMUR</option>
+          <option value="Escazu Village">Escazu Village</option>
+          <option value="Green Valley">Green Valley</option>
+          <option value="Plaza Itskazu">Plaza Itskazu</option>
+          <option value="Lincoln Plaza">Lincoln Plaza</option>
+          <option value="Mango Plaza">Mango Plaza</option>
+          <option value="Cliente Externo">Cliente Externo</option>
+          <option value="Plaza Bratsi">Plaza Bratsi</option>
+          <option value="Marina Pez Vela">Marina Pez Vela</option>
+          <option value="Terminal 7-10">Terminal 7-10</option>
+          <option value="Terrazas Lindora">Terrazas Lindora</option>
+          <option value="Torre Universal">Torre Universal</option>
+        </select>
+      ) : (
+        <input
+          type={type}
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          className="w-full border rounded p-2"
+          {...(name !== "oc_cliente" ? { required: true } : {})}
+        />
+      )}
     </div>
+  ))}
+</div>
+
 
     {/* Textareas */}
     <div className="mt-4">
-        <label className="block font-semibold">LABORES REALIZADAS:</label>
+        <label className="block font-semibold">LABORES REALIZADAS Y PERSONAL TÉCNICO UTILIZADO:</label>
         <textarea
             name="labores_realizadas"
             value={formData.labores_realizadas}
@@ -245,6 +290,9 @@ const handleDeleteFila = (index) => {
                 </label>
             ))}
         </div>
+        {errorTiposTrabajo && (
+        <p className="text-red-500 text-sm mt-1">Debe seleccionar al menos un tipo de trabajo.</p>
+    )}
     </div>
 
     {/* Tabla Detalle de Equipos */}

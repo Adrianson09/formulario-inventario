@@ -18,7 +18,7 @@ const ResetPasswordPage = () => {
     }
 
     try {
-      const response = await fetch("http://31.220.104.197:3001/reset-password", {
+      const response = await fetch("https://revify.tech/api/reset-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

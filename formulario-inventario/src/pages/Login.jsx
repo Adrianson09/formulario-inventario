@@ -13,7 +13,7 @@ const Login = () => {
         setError(""); // Limpiar errores previos
 
         try {
-            const response = await axios.post("http://31.220.104.197:3001/login", {
+            const response = await axios.post("https://revify.tech/api/login", {
                 email,
                 password,
             });

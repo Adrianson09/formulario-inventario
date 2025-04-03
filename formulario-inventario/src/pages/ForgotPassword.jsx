@@ -14,7 +14,7 @@ const ForgotPassword = () => {
         setIsLoading(true);
 
         try {
-            const response = await axios.post("http://31.220.104.197:3001/forgot-password", { email });
+            const response = await axios.post("https://revify.tech/api/forgot-password", { email });
             setMessage(response.data.message);
         } catch (err) {
             setError("No se pudo enviar el correo. Verifica que el email esté registrado.");
